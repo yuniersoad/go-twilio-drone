@@ -1,0 +1,9 @@
+package: github.com/yuniersoad/go-twilio-drone
+
+import:
+- package: github.com/felixge/ardrone/client
+  version: 9e4cd04bf9ad11232f7821041d38f96aea755c6f
+- package: github.com/go-chi/chi
+  version: ^3.3.2
+  subpackages:
+  - middleware

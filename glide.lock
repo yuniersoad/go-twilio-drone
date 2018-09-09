@@ -1,0 +1,17 @@
+hash: 41102bb14035eaca4c12648dc5a9e60bcbc0dff487779ea4dadd592223f49b58
+updated: 2018-09-09T11:50:07.630664591-05:00
+imports:
+- name: github.com/felixge/ardrone
+  version: 9e4cd04bf9ad11232f7821041d38f96aea755c6f
+  subpackages:
+  - client
+- name: github.com/felixge/go-ardrone
+  version: 9e4cd04bf9ad11232f7821041d38f96aea755c6f
+  subpackages:
+  - client/commands
+  - client/navdata
+- name: github.com/go-chi/chi
+  version: b5294d10673813fac8558e7f47242bc9e61b4c25
+  subpackages:
+  - middleware
+testImports: []
