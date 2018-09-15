@@ -38,6 +38,13 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Drone connected")
+	go func() {
+		for c := range client.Navdata {
+			if c.Demo.Battery <= 18 {
+				fmt.Printf("WARNING: Low Drone Batterry:  %d %%\n", c.Demo.Battery)
+			}
+		}
+	}()
 
 	srv := &http.Server{Addr: ":8080"}
 	r := chi.NewRouter()
