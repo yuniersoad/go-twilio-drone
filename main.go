@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	responseTemplate = `<Response><Say language="en-US">%s</Say><Gather timeout="10" numDigits="1" maxSpeechTime="2" language="en-US" input="speech dtmf" hints="take off, land" finishOnKey=""/><Redirect method="POST">/dron</Redirect></Response>`
-	rotationSpeed    = 0.3
+	responseTemplate = `<Response><Say language="en-US">%s</Say><Gather timeout="10" numDigits="1" language="en-US" input="dtmf" finishOnKey=""/><Redirect method="POST">/dron</Redirect></Response>`
+	rotationSpeed    = 0.1
 	movSpeed         = 0.1
 )
 
