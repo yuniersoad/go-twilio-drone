@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/felixge/ardrone/client"
 	"github.com/go-chi/chi"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -24,11 +23,19 @@ type Command struct {
 
 var (
 	dtmfCommands = map[string]Command{
-		"#": {duration: 3 * time.Second, state: ardrone.State{Fly: true}},                      // Take off
-		"*": {duration: 1 * time.Second, state: ardrone.State{Fly: false}},                     // Land
-		"1": {duration: 2 * time.Second, state: ardrone.State{Fly: true, Yaw: -rotationSpeed}}, // Counterclockwise
-		"3": {duration: 2 * time.Second, state: ardrone.State{Fly: true, Yaw: rotationSpeed}},  // Clockwise
-		"2": {duration: 2 * time.Second, state: ardrone.State{Fly: true, Pitch: movSpeed}},     // Forward
+		//Rotation
+		"1": {duration: 1200 * time.Millisecond, state: ardrone.State{Fly: true, Yaw: -rotationSpeed}}, // Counterclockwise
+		"3": {duration: 1200 * time.Millisecond, state: ardrone.State{Fly: true, Yaw: rotationSpeed}},  // Clockwise
+
+		//Move
+		"2": {duration: 900 * time.Millisecond, state: ardrone.State{Fly: true, Pitch: movSpeed}},  // Forward
+		"8": {duration: 900 * time.Millisecond, state: ardrone.State{Fly: true, Pitch: -movSpeed}}, // Back
+		"6": {duration: 900 * time.Millisecond, state: ardrone.State{Fly: true, Roll: movSpeed}},   // Right
+		"4": {duration: 900 * time.Millisecond, state: ardrone.State{Fly: true, Roll: -movSpeed}},  // Left
+
+		//Altitude
+		"5": {duration: 1000 * time.Millisecond, state: ardrone.State{Fly: true, Vertical: movSpeed}}, // Up
+		"0": {duration: 500 * time.Millisecond, state: ardrone.State{Fly: true, Vertical: -movSpeed}}, // Down
 	}
 )
 
@@ -53,46 +60,62 @@ func main() {
 
 		r.ParseForm()
 		d := r.Form.Get("Digits")
-		fmt.Println(d)
+
 		if d != "" {
-			if c, ok := dtmfCommands[d]; ok {
-				client.ApplyFor(c.duration, c.state)
+			fmt.Printf("Drone will %s\n", d)
+			if executeDronCommand(client, d) {
 				feedback = "Done"
 			} else {
-				feedback = "Unknown Command"
+				feedback = "Unknown command"
 			}
-
 		}
+		fmt.Println(feedback)
 		w.Header().Set("Content-type", "text/xml")
 		w.Write([]byte(fmt.Sprintf(responseTemplate, feedback)))
 	})
 	http.Handle("/", r)
 	go func() {
+		fmt.Println("Httpserver: Started")
 		if err := srv.ListenAndServe(); err != nil {
 			// cannot panic, because this probably is an intentional close
-			log.Printf("Httpserver: ListenAndServe() error: %s", err)
+			fmt.Printf("Httpserver: ListenAndServe() error: %s", err)
 		}
 	}()
 
 	scanner := bufio.NewScanner(os.Stdin)
-	var t string
+	var k string
 	for true {
 		scanner.Scan()
-		t = scanner.Text()
+		k = scanner.Text()
 
 		if err := scanner.Err(); err != nil {
 			fmt.Println("Error reading from input: ", err)
 		}
-		if t == "q" {
+		if k == "q" {
 			client.Land()
 			if err := srv.Shutdown(nil); err != nil {
 				panic(err)
 			}
 			break
 		}
-
-		if c, ok := dtmfCommands[t]; ok {
-			client.ApplyFor(c.duration, c.state)
-		}
+		_ = executeDronCommand(client, k)
 	}
+}
+
+func executeDronCommand(client *ardrone.Client, command string) bool {
+	if command == "#" {
+		client.Takeoff()
+		return true
+	}
+	if command == "*" {
+		client.Land()
+		return true
+	}
+	if c, ok := dtmfCommands[command]; ok {
+		client.Apply(c.state)
+		time.Sleep(c.duration)
+		client.Hover()
+		return true
+	}
+	return false
 }
